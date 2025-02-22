@@ -1,0 +1,150 @@
+/* Basic Navbar Styling */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+  background: linear-gradient(135deg, #f7c4e0, #b1d3fe);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  color: #fff;
+  position: relative;
+  z-index: 10;
+}
+.navbar {
+  position: fixed; /* Fix the navbar at the top */
+  top: 0;
+  left: 0;
+  width: 97%;
+  z-index: 1000; /* Ensure it stays above other elements */
+
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Optional: adds a shadow */
+}
+
+.navbar-logo a {
+  text-decoration: none;
+  color: #fff;
+  font-size: 28px;
+  font-weight: bold;
+  font-family: 'Poppins', sans-serif;
+  transition: color 0.3s ease;
+}
+
+.navbar-logo a:hover {
+  color: #ffdd57; /* Add a hover effect for the logo */
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 25px;
+  align-items: center;
+}
+
+.nav-links li a {
+  text-decoration: none;
+  color: #fff;
+  font-size: 18px;
+  font-family: 'Poppins', sans-serif;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.nav-links li a::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: #ffdd57;
+  transition: width 0.3s ease;
+}
+
+.nav-links li a:hover {
+  color: #ffdd57;
+}
+
+.nav-links li a:hover::after {
+  width: 100%;
+}
+
+.sign-in-btn {
+  background-color: #ffdd57;
+  color: #333;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 30px;
+  font-size: 16px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.sign-in-btn:hover {
+  background-color: #f9c846;
+  transform: scale(1.05);
+}
+
+/* Hamburger Menu */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.hamburger .bar {
+  width: 30px;
+  height: 4px;
+  background-color: #fff;
+  border-radius: 2px;
+}
+
+/* Mobile-Specific Styles */
+.nav-links.mobile {
+  position: absolute;
+  top: 70px;
+  right: 0;
+  background: rgba(26, 115, 232, 0.95);
+  width: 100%;
+  text-align: center;
+  display: none;
+  flex-direction: column;
+  padding: 20px 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+  border-radius: 0 0 15px 15px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.nav-links.mobile.active {
+  display: flex;
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.nav-links.mobile li {
+  margin: 15px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none; /* Hide navbar items by default on mobile */
+  }
+
+  .hamburger {
+    display: flex;
+  }
+}
+
+/* Smooth transitions */
+.nav-links,
+.hamburger .bar,
+.sign-in-btn,
+.navbar-logo a {
+  transition: all 0.3s ease;
+}
