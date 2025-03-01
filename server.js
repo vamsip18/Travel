@@ -179,6 +179,75 @@ app.get("/tourist-places", async (req, res) => {
 
 
 // API Endpoint to fetch restaurants (unchanged)
+// app.get("/restaurants", async (req, res) => {
+//   const { location, budget } = req.query;
+
+//   try {
+//     const { latitude, longitude } = await getCoordinates(location);
+
+//     const foursquareAPI = "https://api.foursquare.com/v3/places/search";
+//     const foursquarePhotoAPI = (venueId) =>
+//       `https://api.foursquare.com/v3/places/${venueId}/photos`;
+
+//     const headers = {
+//       Accept: "application/json",
+//       Authorization: process.env.FOURSQUARE_API_KEY,
+//     };
+
+//     const response = await axios.get(foursquareAPI, {
+//       headers,
+//       params: {
+//         ll: `${latitude},${longitude}`,
+//         query: "restaurant",
+//         radius: 5000,
+//         sort: "distance",
+//         price: budget,
+//         limit: 10,
+//       },
+//     });
+
+//     const restaurants = response.data.results;
+
+//     const restaurantData = await Promise.all(
+//       restaurants.map(async (restaurant) => {
+//         try {
+//           const photoResponse = await axios.get(
+//             foursquarePhotoAPI(restaurant.fsq_id),
+//             { headers }
+//           );
+//           const photos = photoResponse.data;
+
+//           let photoUrl = "https://via.placeholder.com/250x150.png?text=No+Image"; // Default image
+//           if (photos.length > 0) {
+//             photoUrl = `${photos[0].prefix}original${photos[0].suffix}`;
+//           }
+//           return {
+//             id: restaurant.fsq_id,
+//             name: restaurant.name,
+//             location: restaurant.location,
+//             photo: photoUrl,
+//             geocodes: restaurant.geocodes,
+//           };
+//         } catch (error) {
+//           console.error(
+//             `Error fetching photo for restaurant ${restaurant.fsq_id}:`,
+//             error.message
+//           );
+//           return null;
+//         }
+//       })
+//     );
+
+//     const filteredData = restaurantData.filter((item) => item !== null);
+
+//     res.json(filteredData);
+//   } catch (error) {
+//     console.error("Error fetching restaurants:", error.message);
+//     res.status(500).json({ error: "Failed to fetch restaurant data." });
+//   }
+// });
+
+
 app.get("/restaurants", async (req, res) => {
   const { location, budget } = req.query;
 
@@ -210,6 +279,7 @@ app.get("/restaurants", async (req, res) => {
 
     const restaurantData = await Promise.all(
       restaurants.map(async (restaurant) => {
+        let photoUrl = "https://via.placeholder.com/250x150.png?text=No+Image";
         try {
           const photoResponse = await axios.get(
             foursquarePhotoAPI(restaurant.fsq_id),
@@ -217,24 +287,26 @@ app.get("/restaurants", async (req, res) => {
           );
           const photos = photoResponse.data;
 
-          let photoUrl = "https://via.placeholder.com/250x150.png?text=No+Image"; // Default image
           if (photos.length > 0) {
             photoUrl = `${photos[0].prefix}original${photos[0].suffix}`;
+          } else {
+            photoUrl = await fetchImageFromUnsplash(restaurant.name);
           }
-          return {
-            id: restaurant.fsq_id,
-            name: restaurant.name,
-            location: restaurant.location,
-            photo: photoUrl,
-            geocodes: restaurant.geocodes,
-          };
         } catch (error) {
           console.error(
             `Error fetching photo for restaurant ${restaurant.fsq_id}:`,
             error.message
           );
-          return null;
+          photoUrl = await fetchImageFromUnsplash(restaurant.name);
         }
+
+        return {
+          id: restaurant.fsq_id,
+          name: restaurant.name,
+          location: restaurant.location,
+          photo: photoUrl,
+          geocodes: restaurant.geocodes,
+        };
       })
     );
 
@@ -246,6 +318,7 @@ app.get("/restaurants", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch restaurant data." });
   }
 });
+
 
 // Endpoint to fetch hospitals, clinics, and pharmacies (new endpoints)
 app.get("/:type", async (req, res) => {
