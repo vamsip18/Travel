@@ -1,58 +1,157 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import "./WeatherInfo.css";
+import { API_KEY } from "./config";
 
-const WeatherInfo = () => {
-  const [location, setLocation] = useState("");
-  const [date, setDate] = useState("");
-  const [weather, setWeather] = useState(null);
-  const [error, setError] = useState(null);
+const WeatherInfo = ({ location, date }) => {
+  // const  API_KEY=process.env.OPENWEATHERMAP_API_KEY;
+  const [error, setError] = useState(false);
+  const [weatherData, setWeatherData] = useState(null);
+  const [forecastData, setForecastData] = useState([]);
+  const dayName = new Date(date).toLocaleDateString("en-US", { weekday: "long" });
+  const formattedDate = new Date(date).toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const todayIndex = new Date(date).getDay();
 
-  const fetchWeather = async () => {
+  useEffect(() => {
+    if (location && date) {
+      fetchWeatherData(location, date);
+    }
+  }, [location, date]);
+
+  // ✅ Fetch weather data by city name and date
+  const fetchWeatherData = async (city, date) => {
     try {
-      setError(null);
-      const response = await axios.get("http://localhost:8000/weather", {
-        params: { location, date },
+      setError(false);
+      // Fetch current weather
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
+      );
+      const data = await response.json();
+
+      if (data.cod !== 200) {
+        console.error("City not found or invalid date!");
+        setError(true);
+        return;
+      }
+
+      setWeatherData(data);
+
+      // ✅ Fetch forecast for the next 4 days from the given date
+      fetchForecastData(data.coord.lat, data.coord.lon, date);
+    } catch (error) {
+      console.error("Error fetching weather data:", error);
+      setError(true);
+    }
+  };
+
+  // ✅ Fetch 4-day forecast data starting from the given date
+  const fetchForecastData = async (lat, lon, date) => {
+    try {
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
+      );
+      const data = await response.json();
+
+      // ✅ Filter forecast data based on the given date
+      const targetDate = new Date(date).toISOString().split("T")[0];
+      const filteredData = data.list.filter((item) => {
+        const itemDate = item.dt_txt.split(" ")[0];
+        return itemDate >= targetDate; // Include forecast from the selected date onwards
       });
-      setWeather(response.data);
-    } catch (err) {
-      setError("Failed to fetch weather data. Please try again.");
-      console.error(err);
+
+      // ✅ Get only the next 4 unique days from the filtered forecast
+      const uniqueDays = [];
+      const next4DaysData = filteredData.filter((item) => {
+        const itemDate = new Date(item.dt_txt).getDate();
+        if (!uniqueDays.includes(itemDate)) {
+          uniqueDays.push(itemDate);
+          return true;
+        }
+        return false;
+      });
+
+      // ✅ Show the next 4 days after the selected date
+      setForecastData(next4DaysData.slice(1, 5)); // Get the next 4 days forecast
+    } catch (error) {
+      console.error("Error fetching forecast data:", error);
+      setError(true);
     }
   };
 
   return (
-    <div style={{ textAlign: "center", padding: "20px" }}>
-      <h1>Weather Information</h1>
-      <input
-        type="text"
-        placeholder="Enter location"
-        value={location}
-        onChange={(e) => setLocation(e.target.value)}
-        style={{ padding: "10px", margin: "5px" }}
-      />
-      <input
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-        style={{ padding: "10px", margin: "5px" }}
-      />
-      <button onClick={fetchWeather} style={{ padding: "10px 20px", margin: "10px" }}>
-        Get Weather
-      </button>
+    <>
+      {location && <h1>Weather Information for {location}</h1>}
+      {error && (
+        <p style={{ color: "red", textAlign: "center" }}>
+          Error fetching weather data. Please provide a valid location or date.
+        </p>
+      )}
+      {!error && weatherData && (
+        <div className="WeatherInfo">
+          <div className="ForecastBox">
+            <div className="left-section">
+              <h2 className="day">{dayName}</h2>
+              <span className="date">{formattedDate}</span>
+              <img
+                src={`https://openweathermap.org/img/wn/${weatherData.weather[0].icon}@4x.png`}
+                alt="weather-icon"
+                className="weather-icon"
+              />
+              <h2 className="temp">{Math.round(weatherData.main.temp)}°C</h2>
+              <h3 className="cloud">{weatherData.weather[0].description}</h3>
+            </div>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+            <div className="right-section">
+              <div className="info-box">
+                <span className="label">City</span>
+                <span className="value">{weatherData.name}</span>
+              </div>
+              <div className="info-box">
+                <span className="label">Temperature</span>
+                <span className="value">{Math.round(weatherData.main.temp)}°C</span>
+              </div>
+              <div className="info-box">
+                <span className="label">Humidity</span>
+                <span className="value">{weatherData.main.humidity}%</span>
+              </div>
+              <div className="info-box">
+                <span className="label">Wind Speed</span>
+                <span className="value">{weatherData.wind.speed} Km/h</span>
+              </div>
 
-      {weather && (
-        <div style={{ border: "1px solid #ccc", padding: "20px", borderRadius: "10px", marginTop: "20px" }}>
-          <h2>{weather.location}</h2>
-          <p><strong>Date:</strong> {weather.requested_date}</p>
-          <p><strong>Temperature:</strong> {weather.temperature}°C</p>
-          <p><strong>Condition:</strong> {weather.description}</p>
-          <p><strong>Humidity:</strong> {weather.humidity}%</p>
-          <p><strong>Wind Speed:</strong> {weather.wind_speed} m/s</p>
+              {/* ✅ Forecast Section */}
+              <div className="forecast-box">
+                {forecastData.map((item, index) => {
+                  const day = new Date(item.dt_txt).getDay();
+
+                  return (
+                    <div
+                      key={index}
+                      className={`forecast-item ${
+                        day === todayIndex ? "active" : ""
+                      }`}
+                    >
+                      <img
+                        src={`https://openweathermap.org/img/wn/${item.weather[0].icon}@2x.png`}
+                        alt="weather"
+                      />
+                      <span className="forecast-day">{days[day]}</span>
+                      <p className="forecast-temp">
+                        {Math.round(item.main.temp)}°C
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
