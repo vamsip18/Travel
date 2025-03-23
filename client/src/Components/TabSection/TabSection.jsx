@@ -30,7 +30,7 @@ const TabSection = ({ location, date }) => {
         {activeTab === "Restaurants" && <TopRestaurants location={location} />}
         {activeTab === "Live Events" && <LiveEvents location={location} date={date} />}
         {activeTab === "Hospitals" && <Hospitals location={location} />}
-        {activeTab === "Weather Info" && <WeatherInfo location={location} />}
+        {activeTab === "Weather Info" && <WeatherInfo location={location} date={date}/>}
       </div>
     </div>
   );
